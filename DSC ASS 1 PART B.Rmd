@@ -1,0 +1,478 @@
+---
+title: "DSC 4824 assignment 1"
+author: "Nkanyiso Ntombela 46442871"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+Run the Tabu algorithm on the given matrix
+0, 5, 4, 8, 7, 5
+5, 0, 4, 6, 3, 2,
+4, 4, 0, 5, 8, 1,
+8, 6, 5, 0, 6, 4,
+7, 3, 8, 6, 0, 6,
+5, 2, 1, 4, 6, 0
+Give the result and best tour. Run it a few times to see if the best tour changes.
+
+```{r Question 1a}
+# Define the tsp_distance function to calculate the total distance of a tour
+tsp_distance <- function(distances, solution) {
+  n <- length(solution)
+  total_distance <- 0
+  for (i in 1:(n - 1)) {
+    total_distance <- total_distance + distances[solution[i], solution[i + 1]]
+  }
+  total_distance <- total_distance + distances[solution[n], solution[1]]
+  return(total_distance)
+}
+
+# Define the tsp_2opt_tabu_search function to perform the 2-opt Tabu search
+tsp_2opt_tabu_search <- function(distances, max_iterations = 1000, tabu_list_length = 5, max_non_improve = 100) {
+  # Get the number of cities
+  n <- nrow(distances)
+  
+  # Initialize the solution with a randomly generated tour
+  solution <- sample(1:n)
+  
+  # Initialize the best solution found so far
+  best_solution <- solution
+  
+  # Initialize the best distance found so far
+  best_distance <- tsp_distance(distances, solution)
+  
+  # Initialize the tabu list
+  tabu_list <- rep(-1, tabu_list_length)
+  
+  # Initialize the number of consecutive non-improving moves
+  non_improve <- 0
+  
+  # Repeat until a stopping criterion is met
+  for (iter in 1:max_iterations) {
+    # Generate a set of candidate solutions by making 2-opt moves
+    candidate_solutions <- list()
+    candidate_distances <- numeric()
+    idx <- 1
+    
+    for (i in 1:(n - 1)) {
+      for (j in (i + 1):n) {
+        candidate <- solution
+        candidate[i:j] <- rev(candidate[i:j])
+        candidate_solutions[[idx]] <- candidate
+        candidate_distances[idx] <- tsp_distance(distances, candidate)
+        idx <- idx + 1
+      }
+    }
+    
+    # Select the best solution that is not tabu
+    feasible_candidates <- setdiff(1:length(candidate_distances), tabu_list)
+    best_candidate_idx <- feasible_candidates[which.min(candidate_distances[feasible_candidates])]
+    best_candidate_distance <- candidate_distances[best_candidate_idx]
+    
+    if (best_candidate_distance < best_distance) {
+      solution <- candidate_solutions[[best_candidate_idx]]
+      best_solution <- solution
+      best_distance <- best_candidate_distance
+      non_improve <- 0
+    } else {
+      non_improve <- non_improve + 1
+    }
+    
+    # Update the tabu list
+    tabu_list <- c(best_candidate_idx, tabu_list[1:(tabu_list_length - 1)])
+    
+    # Check the stopping criterion
+    if (non_improve >= max_non_improve) {
+      break
+    }
+  }
+  
+  return(list(solution = best_solution, distance = best_distance))
+}
+
+# Define the distance matrix
+distances <- matrix(c(
+  0, 5, 4, 8, 7, 5,
+  5, 0, 4, 6, 3, 2,
+  4, 4, 0, 5, 8, 1,
+  8, 6, 5, 0, 6, 4,
+  7, 3, 8, 6, 0, 6,
+  5, 2, 1, 4, 6, 0), nrow = 6, byrow = TRUE)
+
+# Run the algorithm 5 times
+for (i in 1:5) {
+  result <- tsp_2opt_tabu_search(distances, max_iterations = 1000, tabu_list_length = 5, max_non_improve = 100)
+  cat("Run", i, "- Best tour:", result$solution, "Distance:", result$distance, "\n")
+}
+
+
+
+```
+
+b) Now change the distance matrix to
+0, 9, 8, 6, 3, 10, 12
+10, 0, 4, 5, 8, 1, 5
+4, 6, 0, 5, 6, 4, 6
+7, 3, 8, 0, 6, 6, 3
+6, 2, 1, 4, 0, 6, 7
+4, 7, 9, 10, 5, 0, 6
+5, 2, 1, 4, 6, 13, 0
+Give the result and best tour. Again, run it a few times to see if the best tour changes.
+```{r Question 1b}
+# Define the tsp_distance function to calculate the total distance of a tour
+tsp_distance <- function(distances, solution) {
+  n <- length(solution)
+  total_distance <- 0
+  for (i in 1:(n - 1)) {
+    total_distance <- total_distance + distances[solution[i], solution[i + 1]]
+  }
+  total_distance <- total_distance + distances[solution[n], solution[1]]
+  return(total_distance)
+}
+
+# Define the tsp_2opt_tabu_search function to perform the 2-opt Tabu search
+tsp_2opt_tabu_search <- function(distances, max_iterations = 1000, tabu_list_length = 5, max_non_improve = 100) {
+  # Get the number of cities
+  n <- nrow(distances)
+  
+  # Initialize the solution with a randomly generated tour
+  solution <- sample(1:n)
+  
+  # Initialize the best solution found so far
+  best_solution <- solution
+  
+  # Initialize the best distance found so far
+  best_distance <- tsp_distance(distances, solution)
+  
+  # Initialize the tabu list
+  tabu_list <- rep(-1, tabu_list_length)
+  
+  # Initialize the number of consecutive non-improving moves
+  non_improve <- 0
+  
+  # Repeat until a stopping criterion is met
+  for (iter in 1:max_iterations) {
+    # Generate a set of candidate solutions by making 2-opt moves
+    candidate_solutions <- list()
+    candidate_distances <- numeric()
+    idx <- 1
+    
+    for (i in 1:(n - 1)) {
+      for (j in (i + 1):n) {
+        candidate <- solution
+        candidate[i:j] <- rev(candidate[i:j])
+        candidate_solutions[[idx]] <- candidate
+        candidate_distances[idx] <- tsp_distance(distances, candidate)
+        idx <- idx + 1
+      }
+    }
+    
+    # Select the best solution that is not tabu
+    feasible_candidates <- setdiff(1:length(candidate_distances), tabu_list)
+    best_candidate_idx <- feasible_candidates[which.min(candidate_distances[feasible_candidates])]
+    best_candidate_distance <- candidate_distances[best_candidate_idx]
+    
+    if (best_candidate_distance < best_distance) {
+      solution <- candidate_solutions[[best_candidate_idx]]
+      best_solution <- solution
+      best_distance <- best_candidate_distance
+      non_improve <- 0
+    } else {
+      non_improve <- non_improve + 1
+    }
+    
+    # Update the tabu list
+    tabu_list <- c(best_candidate_idx, tabu_list[1:(tabu_list_length - 1)])
+    
+    # Check the stopping criterion
+    if (non_improve >= max_non_improve) {
+      break
+    }
+  }
+  
+  return(list(solution = best_solution, distance = best_distance))
+}
+
+# Define the distance matrix
+distances <- matrix(c(
+0, 9, 8, 6, 3, 10, 12,
+10, 0, 4, 5, 8, 1, 5,
+4, 6, 0, 5, 6, 4, 6,
+7, 3, 8, 0, 6, 6, 3,
+6, 2, 1, 4, 0, 6, 7,
+4, 7, 9, 10, 5, 0, 6,
+5, 2, 1, 4, 6, 13, 0), nrow = 7, byrow = TRUE)
+
+# Run the algorithm 5 times
+for (i in 1:5) {
+  result <- tsp_2opt_tabu_search(distances, max_iterations = 1000, tabu_list_length = 5, max_non_improve = 100)
+  cat("Run", i, "- Best tour:", result$solution, "Distance:", result$distance, "\n")
+}
+
+
+```
+a) Run the simulated annealing algorithm for the Rosenbrock function and look at the output.
+It is trying to find a minimum for the (complicated) Rosenbrock function, which is used
+to test search algorithms. What is the expression for this function? What is the minimum
+found? Change the Rosenbrock function by changing the first x^2_1
+to just x_1. What is the new minimum found? Give your output.
+```{r Question 2a}
+# Load necessary libraries
+library(stats)
+
+##### Rosenbrock function
+# Minimum at f(1,1) = 0
+ro <- function(x){
+  100 * (x[2] - x[1]^2)^2 + (1 - x[1])^2
+}
+
+# Store the function values at each iteration
+trace <- list()
+
+# Custom wrapper to store function values
+ro_trace <- function(x) {
+  val <- ro(x)
+  trace <<- append(trace, list(list(par = x, value = val)))
+  return(val)
+}
+
+# Random start values. Example arguments for the relatively simple Rosenbrock function.
+start_values <- runif(2, min = -1, max = 1)
+
+# Perform optimization using BFGS method with box constraints
+ro_sa <- optim(
+  par = start_values,
+  fn = ro_trace,
+  method = "L-BFGS-B",  # Limited-memory Broyden-Fletcher-Goldfarb-Shanno with Box constraints
+  lower = c(-5, -5),
+  upper = c(5, 5),
+  control = list(trace = 1, maxit = 550)
+)
+
+# Extract function values from trace
+func_values <- sapply(trace, function(x) x$value)
+par_values <- t(sapply(trace, function(x) x$par))
+
+# Visual inspection of function values over iterations
+plot(func_values, type = "l", main = "Function Value Over Iterations", xlab = "Iteration", ylab = "Function Value")
+
+# If you want to visualize the parameter values over iterations
+par(mfrow = c(2, 1)) # 2 plots in one column
+plot(par_values[,1], type = "l", main = "Parameter x[1] Over Iterations", xlab = "Iteration", ylab = "x[1]")
+plot(par_values[,2], type = "l", main = "Parameter x[2] Over Iterations", xlab = "Iteration", ylab = "x[2]")
+
+
+```
+b) Run the simulated annealing algorithm for the Holder function and look at the output.
+It is trying to find a minimum for the (complicated) Holder function, which is also a
+test function for search algorithms. What is the expression for this function? What is
+the minimum found? Change the Rosenbrock function by changing the first factor to
+2 ∗ sin(x) ∗ cos(x). What is the new minimum found? Give your output.
+```{r Question 2b}
+library(optimization)
+
+##### Holder table function
+# 4 minima at
+# f(8.055, 9.665) = -19.2085
+# f(-8.055, 9.665) = -19.2085
+# f(8.055, -9.665) = -19.2085
+# f(-8.055, -9.665) = -19.2085
+ho <- function(x){
+  x1 <- x[1]
+  x2 <- x[2]
+  fact1 <- sin(x1) * cos(x2)
+  fact2 <- exp(abs(1 - sqrt(x1^2 + x2^2) / pi))
+  y <- -abs(fact1 * fact2)
+  return(y)
+}
+
+# Non-random start values. Example arguments for the
+# relatively complex Holder table function.
+ho_sa <- optim_sa(fun = ho,
+                  start = c(1, 1),
+                  lower = c(-10, -10),
+                  upper = c(10, 10),
+                  trace = TRUE,
+                  control = list(dyn_rf = FALSE,
+                                 rf = 1.6,
+                                 t0 = 10,
+                                 nlimit = 200,
+                                 r = 0.6,
+                                 t_min = 0.1
+                  )
+)
+
+# Visual inspection.
+plot(ho_sa)
+# Plot just gives the function values at increasing iterations
+plot(ho_sa, type = "contour")
+# Specifying type as contour gives you a nice picture of
+# the function value landscape with contour lines and shows
+# where the iterations go on the landscape
+
+
+```
+
+```{r Question 2c}
+
+```
+a) Run the genetic algorithm program for the knapsack problem. The given maximum weight
+here is 850. Change it to 900 and give the new output.
+```{r Question 3a}
+library("GA")
+require("GA")
+p <- c(120, 139, 149, 150, 156, 163, 173, 184, 192, 201, 210, 214, 221, 229, 240)
+w <- c(72, 73, 77, 80, 82, 87, 90, 94, 98, 106, 110, 113, 115, 118, 120)
+W <- 850
+knapsack <- function(x) {f <- sum(x * p)
+penalty <- sum(w) * abs(sum(x * w)-W)
+f - penalty
+}
+GA <- ga(type = "binary", fitness = knapsack, nBits = length(w), pmutation = 0.05,
+maxiter = 1000, elitism=2, run = 200, popSize = 15)
+summary(GA)
+
+
+p <- c(120, 139, 149, 150, 156, 163, 173, 184, 192, 201, 210, 214, 221, 229, 240)
+w <- c(72, 73, 77, 80, 82, 87, 90, 94, 98, 106, 110, 113, 115, 118, 120)
+W <- 900
+knapsack <- function(x) {f <- sum(x * p)
+penalty <- sum(w) * abs(sum(x * w)-W)
+f - penalty
+}
+GA <- ga(type = "binary", fitness = knapsack, nBits = length(w), pmutation = 0.05,
+maxiter = 1000, elitism=2, run = 200, popSize = 15)
+summary(GA)
+```
+b) Run the genetic algorithm for the sin function. Change the interval to (−5,5). Give the
+new maximum.
+```{r Question 3b}
+
+library("GA")
+f <- function(x) 2*sin(x)*(x^3 - x^2)
+#students can change this function to anything
+min <- -5
+max <- +5
+curve(f, min, max)
+fitness <- function(x) f(x)
+GA <- ga(type = "real-valued",
+fitness = fitness, lower=min, upper = max)
+plot(GA)
+
+curve (f, min, max)
+points(GA@solution, GA@fitnessValue, col = "blue", pch = 20)
+legend(x = -1, y = -20, legend = "global optimum", title = "Best:", pch = 10,col = "blue")
+
+```
+
+```{r Question 3cqla}
+library("GA")
+library("datasets")
+
+# Define the distance matrix
+TPSM <- matrix(c(
+  0, 5, 4, 8, 7, 5,
+  5, 0, 4, 6, 3, 2,
+  4, 4, 0, 5, 8, 1,
+  8, 6, 5, 0, 6, 4,
+  7, 3, 8, 6, 0, 6,
+  5, 2, 1, 4, 6, 0
+), nrow = 6, byrow = TRUE)
+
+# Check dimensions of TPSM
+print(dim(TPSM))
+
+# Define tspFitness function
+tspFitness <- function(tour, distMatrix) {
+  tour <- c(tour, tour[1])
+  route <- embed(tour, 2)[,2:1]
+  sum(distMatrix[route])
+}
+
+# Define GA parameters
+GA_params <- list(type = "permutation", 
+                  fitness = tspFitness, 
+                  distMatrix = as.matrix(TPSM),
+                  lower = 1, 
+                  upper = nrow(TPSM),  # Use nrow(TPSM) as the upper bound
+                  popSize = 50, 
+                  maxiter = 5000,
+                  run = 1,  # Run the GA only once
+                  pmutation = 0.2)
+
+# Run the GA algorithm multiple times
+best_tours <- list()
+best_distances <- numeric()
+
+for (i in 1:5) {
+  GA <- do.call(ga, GA_params)  # Using do.call to pass GA_params
+  best_tours[[i]] <- GA@solution
+  best_distances[i] <- GA@fitnessValue
+}
+
+# Print results
+for (i in 1:5) {
+  cat("Run", i, "- Best Tour:", best_tours[[i]], "Distance:", best_distances[i], "\n")
+}
+
+```
+
+```{r Question 3c q1b}
+library("GA")
+library("datasets")
+
+# Define the distance matrix
+TPSM <- matrix(c(
+0, 9, 8, 6, 3, 10, 12,
+10, 0, 4, 5, 8, 1, 5,
+4, 6, 0, 5, 6, 4, 6,
+7, 3, 8, 0, 6, 6, 3,
+6, 2, 1, 4, 0, 6, 7,
+4, 7, 9, 10, 5, 0, 6,
+5, 2, 1, 4, 6, 13, 0
+), nrow = 7, byrow = TRUE)
+
+# Check dimensions of TPSM
+print(dim(TPSM))
+
+# Define tspFitness function
+tspFitness <- function(tour, distMatrix) {
+  tour <- c(tour, tour[1])
+  route <- embed(tour, 2)[,2:1]
+  sum(distMatrix[route])
+}
+
+# Define GA parameters
+GA_params <- list(type = "permutation", 
+                  fitness = tspFitness, 
+                  distMatrix = as.matrix(TPSM),
+                  lower = 1, 
+                  upper = nrow(TPSM),  # Use nrow(TPSM) as the upper bound
+                  popSize = 50, 
+                  maxiter = 5000,
+                  run = 1,  # Run the GA only once
+                  pmutation = 0.2)
+
+# Run the GA algorithm multiple times
+best_tours <- list()
+best_distances <- numeric()
+
+for (i in 1:5) {
+  GA <- do.call(ga, GA_params)  # Using do.call to pass GA_params
+  best_tours[[i]] <- GA@solution
+  best_distances[i] <- GA@fitnessValue
+}
+
+# Print results
+for (i in 1:5) {
+  cat("Run", i, "- Best Tour:", best_tours[[i]], "Distance:", best_distances[i], "\n")
+}
+
+```
